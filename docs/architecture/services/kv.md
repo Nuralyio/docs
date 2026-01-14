@@ -65,8 +65,24 @@ Namespaces provide logical grouping for key-value entries. Each namespace has:
 | Name | Unique identifier within an application |
 | Description | What the namespace is used for |
 | Application ID | Parent application reference |
+| Scope | Generic scope identifier (e.g., "application", "workflow", "function") |
+| Scoped Resource ID | ID of the specific resource within the scope |
 | Is Secret Namespace | If true, all values are encrypted |
 | Default TTL | Default expiration time for entries |
+
+### Scopes
+
+Scopes allow you to organize namespaces by their intended usage context. Common scope values:
+
+| Scope | Description | Example Use Case |
+|-------|-------------|------------------|
+| `application` | Application-wide access | Global config, shared secrets |
+| `workflow` | Workflow-specific access | Workflow credentials, step configs |
+| `function` | Function-specific access | Function env vars, API keys |
+| `component` | Component-specific access | UI component state, preferences |
+| `user` | User-specific access | User preferences, tokens |
+
+Scopes are generic strings, allowing you to define custom scopes as needed.
 
 ### Entries
 
@@ -112,6 +128,14 @@ For secret namespaces, all value changes are tracked:
 | PUT | `/api/v1/kv/namespaces/{id}` | Update a namespace |
 | DELETE | `/api/v1/kv/namespaces/{id}` | Delete a namespace |
 
+#### Namespace Query Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `applicationId` | Filter by application ID |
+| `scope` | Filter by scope (e.g., "workflow", "function") |
+| `scopedResourceId` | Filter by scoped resource ID (e.g., workflow ID) |
+
 ### Entry Operations
 
 | Method | Endpoint | Description |
@@ -147,12 +171,33 @@ POST /api/v1/kv/namespaces
   "name": "production-secrets",
   "description": "Production environment secrets",
   "applicationId": "app-123",
+  "scope": "application",
   "isSecretNamespace": true,
   "defaultTtlSeconds": null
 }
 ```
 
 Secret namespaces automatically encrypt all stored values.
+
+### Creating a Workflow-Scoped Namespace
+
+```
+POST /api/v1/kv/namespaces
+{
+  "name": "workflow-credentials",
+  "description": "Credentials for payment workflow",
+  "applicationId": "app-123",
+  "scope": "workflow",
+  "scopedResourceId": "workflow-456",
+  "isSecretNamespace": true
+}
+```
+
+This namespace is scoped to a specific workflow and can be filtered when listing:
+
+```
+GET /api/v1/kv/namespaces?applicationId=app-123&scope=workflow&scopedResourceId=workflow-456
+```
 
 ### Storing a Value
 
